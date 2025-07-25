@@ -6,8 +6,6 @@ body {
 :root {
     --primary-blue: #5BC1FF;
     --secondary-blue: #74AFD3;
-    --light-blue: #A5D7E8;
-    --very-light-blue: #CEEAF4;
     --white: #FFFFFF;
 }
 
@@ -50,4 +48,22 @@ body {
 
 .rounded-4 {
     border-radius: 1rem !important;
+}
+
+/* New table styles */
+.table > :not(caption) > * > * {
+    padding: 0.9rem 1rem;
+    vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(91, 193, 255, 0.1);
+}
+
+thead th {
+    color: var(--secondary-blue);
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
 }

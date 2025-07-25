@@ -5,39 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <nav class="navbar navbar-expand-lg shadow-sm">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="#">Dashboard Pengguna</a>
+            <a class="navbar-brand fw-bold" href="#">Dashboard Laporan</a>
             <button id="logoutButton" class="btn btn-outline-primary">Keluar</button>
         </div>
     </nav>
 
-    <div class="container mt-5">
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card text-center shadow-sm border-0 rounded-4">
-                    <div class="card-header text-white p-4 rounded-top-4">
-                        <h3 class="mb-0">Akses File Anda</h3>
-                    </div>
-                    <div class="card-body p-5">
-                        <h5 class="card-title">Selamat Datang, <span id="userName" class="fw-bold"></span>!</h5>
-                        <p class="card-text">Anda telah berhasil masuk. Klik tombol di bawah untuk mengunduh file yang telah disediakan.</p>
-                        <button id="downloadButton" class="btn btn-primary btn-lg rounded-3 px-5">
-                            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-                            Unduh File
-                        </button>
-                        <div id="downloadMessage" class="alert mt-3 d-none" role="alert"></div>
-                    </div>
+    <main class="container mt-5">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header text-white p-3">
+                <h3 class="mb-0">Daftar File Laporan</h3>
+            </div>
+            <div class="card-body p-0">
+                <div id="status-container" class="text-center p-5 d-none"></div>
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col" class="ps-4">Nama File</th>
+                                <th scope="col">Tanggal</th>
+                                <th scope="col" class="text-end pe-4">Tindakan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reports-tbody">
+                            </tbody>
+                    </table>
                 </div>
             </div>
         </div>
-    </div>
+    </main>
 
     <script src="js/dashboard.js" type="module"></script>
 </body>

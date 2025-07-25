@@ -1,81 +1,113 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const userNameSpan = document.getElementById('userName');
-    const downloadButton = document.getElementById('downloadButton');
-    const logoutButton = document.getElementById('logoutButton');
-    const downloadMessage = document.getElementById('downloadMessage');
-    const spinner = downloadButton.querySelector('.spinner-border');
+// js/dashboard.js
+import { API_BASE_URL } from './config.js';
 
-    const token = sessionStorage.getItem('authToken');
-    const user = sessionStorage.getItem('loggedInUser'); // Ambil nama pengguna
+// --- Authentication & Guards ---
+const token = sessionStorage.getItem('authToken');
+if (!token) {
+    alert('You must be logged in to view this page.');
+    window.location.href = 'index.html';
+}
 
-    if (!token || !user) {
-        alert('Anda harus login terlebih dahulu untuk mengakses halaman ini.');
-        window.location.href = 'index.html';
-        return;
-    }
+// --- DOM Elements ---
+const reportsTableBody = document.getElementById('reports-tbody');
+const statusContainer = document.getElementById('status-container');
+const logoutButton = document.getElementById('logoutButton');
 
-    // Tampilkan nama pengguna di elemen span
-    userNameSpan.textContent = user;
+// --- Functions ---
 
-    logoutButton.addEventListener('click', () => {
-        sessionStorage.removeItem('authToken');
-        sessionStorage.removeItem('loggedInUser'); // Hapus juga nama pengguna
-        window.location.href = 'index.html';
-    });
+/**
+ * Shows a status message (loading/error/empty).
+ * @param {string} message 
+ */
+function showStatus(message) {
+    reportsTableBody.innerHTML = '';
+    statusContainer.innerHTML = `<p class="text-muted">${message}</p>`;
+    statusContainer.classList.remove('d-none');
+}
 
-    downloadButton.addEventListener('click', async () => {
-        spinner.classList.remove('d-none');
-        downloadButton.disabled = true;
-        downloadMessage.classList.add('d-none');
+/**
+ * Fetches and renders the list of reports.
+ */
+async function loadReports() {
+    showStatus('Loading reports...');
+    try {
+        const response = await fetch(`${API_BASE_URL}/reports`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+        });
 
-        const downloadEndpoint = 'https://your-gcp-backend.com/api/download';
+        if (!response.ok) throw new Error('Failed to fetch reports.');
+        
+        const reports = await response.json();
 
-        try {
-            const response = await fetch(downloadEndpoint, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
-
-            if (response.ok) {
-                const disposition = response.headers.get('content-disposition');
-                let filename = 'downloaded-file';
-                if (disposition && disposition.indexOf('attachment') !== -1) {
-                    const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-                    const matches = filenameRegex.exec(disposition);
-                    if (matches != null && matches[1]) {
-                        filename = matches[1].replace(/['"]/g, '');
-                    }
-                }
-
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-
-                window.URL.revokeObjectURL(url);
-                a.remove();
-
-                downloadMessage.textContent = 'Unduhan berhasil dimulai!';
-                downloadMessage.className = 'alert alert-success mt-3';
-            } else {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Gagal mengunduh file.');
-            }
-        } catch (error) {
-            console.error('Error saat mengunduh:', error);
-            downloadMessage.textContent = `Gagal mengunduh: File tidak ditemukan atau masalah server.`;
-            downloadMessage.className = 'alert alert-danger mt-3';
-        } finally {
-            spinner.classList.add('d-none');
-            downloadButton.disabled = false;
-            downloadMessage.classList.remove('d-none');
+        if (reports.length === 0) {
+            showStatus('No reports found.');
+            return;
         }
-    });
+
+        // Render table rows
+        statusContainer.classList.add('d-none');
+        reportsTableBody.innerHTML = reports.map(report => `
+            <tr>
+                <td class="ps-4">${report.name}</td>
+                <td>${new Date(report.createdAt).toLocaleDateString('id-ID')}</td>
+                <td class="text-end pe-4">
+                    <button class="btn btn-sm btn-primary download-btn" data-filename="${report.fileName}">
+                        Download
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+
+    } catch (error) {
+        showStatus(`Error: ${error.message}`);
+    }
+}
+
+/**
+ * Handles the download process for a specific file.
+ * @param {HTMLButtonElement} button 
+ * @param {string} fileName 
+ */
+async function handleDownload(button, fileName) {
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.innerHTML = `<span class="spinner-border spinner-border-sm"></span>`;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/reports/${fileName}/download-url`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+        });
+
+        if (!response.ok) throw new Error('Could not get download link.');
+        
+        const data = await response.json();
+        
+        // Open the secure, temporary URL from GCP to start the download.
+        window.open(data.url, '_blank');
+
+    } catch (error) {
+        alert(`Download failed: ${error.message}`);
+    } finally {
+        button.disabled = false;
+        button.innerHTML = originalText;
+    }
+}
+
+// --- Event Listeners ---
+
+// Load reports when the page is ready.
+document.addEventListener('DOMContentLoaded', loadReports);
+
+// Handle logout.
+logoutButton.addEventListener('click', () => {
+    sessionStorage.removeItem('authToken');
+    window.location.href = 'index.html';
+});
+
+// Use event delegation for download buttons.
+reportsTableBody.addEventListener('click', (event) => {
+    const button = event.target.closest('.download-btn');
+    if (button) {
+        handleDownload(button, button.dataset.filename);
+    }
 });
